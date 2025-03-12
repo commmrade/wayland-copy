@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Failed to fork");
     }
     if (i > 0) {
-        return 0;
+        _exit(0);
     }
     if (i == 0) std::cout << "hi\n";
     while (display.dispatch() > 0) {
