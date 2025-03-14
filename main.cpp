@@ -3,9 +3,7 @@
 #include "wlregistry.hpp"
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <variant>
 #include <wayland-client-core.h>
