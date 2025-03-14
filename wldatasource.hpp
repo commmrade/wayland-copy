@@ -9,7 +9,6 @@ inline void __target_s(void *data,
 }
 inline void __send(void *data,
 			  struct wl_data_source *wl_data_source) {
-	std::cerr << "Cancelled" << std::endl;
 	exit(0);
 }
 }

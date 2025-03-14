@@ -16,7 +16,7 @@
 #include "utils.hpp"
 #include <signal.h>
 #include <sys/stat.h>
-
+#include <fcntl.h>
 
 
 struct App {
@@ -50,7 +50,6 @@ void data_source_send(void* data, struct wl_data_source* data_source, const char
     }
 
     App* app = reinterpret_cast<App*>(data);
-    std::cout << mime_type << std::endl;
 
     std::string buffer;
     if (app->tempfile_fd == -1) {
@@ -82,7 +81,6 @@ void data_source_send(void* data, struct wl_data_source* data_source, const char
         auto written = write(fd, buffer.c_str() + total_written, to_be_written);
         total_written += written;
     }
-    std::cout << buffer << std::endl;
 
     close(fd);
 }
@@ -118,7 +116,7 @@ template<class... Ts>
 overload(Ts...) -> overload<Ts...>;
 
 int main(int argc, char** argv) {
-    signal(SIGPIPE, SIG_IGN);
+
     App app{};
 
     auto user_input = get_input_from_stdin(app);
@@ -156,13 +154,30 @@ int main(int argc, char** argv) {
 
     data_device.set_selection(data_source, 0);
 
-    // int i = fork();
-    // if (i < 0) {
-    //     throw std::runtime_error("Failed to fork");
-    // }
-    // if (i > 0) {
-    //     exit(0);
-    // }
+    int nullfd = open("/dev/null", O_RDWR);
+    if (nullfd == 0) {
+        std::cerr << "damn devnull error\n";
+    }
+
+
+    dup2(nullfd, STDIN_FILENO);
+    dup2(nullfd, STDOUT_FILENO);
+    close(nullfd);
+
+    if (chdir("/") < 0) { // Prevent unmounting errors
+        std::cerr << "Error chdir\n";
+    }
+    signal(SIGPIPE, SIG_IGN);
+
+    int i = fork();
+    if (i < 0) {
+        throw std::runtime_error("Failed to fork");
+    }
+    if (i > 0) {
+        exit(0); // Exiting root process
+    }
+    // Child stands
+
     while (display.dispatch() > 0) {
     }
 
