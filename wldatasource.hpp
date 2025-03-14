@@ -2,10 +2,15 @@
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
-namespace detail {
-inline void target_s(void *data,
+namespace __detail {
+inline void __target_s(void *data,
 		       struct wl_data_source *wl_data_source,
 		       const char *mime_type) {
+}
+inline void __send(void *data,
+			  struct wl_data_source *wl_data_source) {
+	std::cerr << "Cancelled" << std::endl;
+	exit(0);
 }
 }
 
@@ -15,8 +20,9 @@ private:
     wl_data_source* m_data_source;
 
     wl_data_source_listener data_source_listener {
-        .target = detail::target_s,
+        .target = __detail::__target_s,
         .send = NULL,
+        .cancelled = __detail::__send,
     };
 public:
     explicit WlDataSource(wl_data_source* data_source) {
