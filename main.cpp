@@ -1,9 +1,11 @@
 #include "wldatadevice.hpp"
 #include "wldisplay.hpp"
 #include "wlregistry.hpp"
+
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <wayland-client-core.h>
@@ -17,17 +19,9 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-
-struct App {
-    int tempfile_fd{-1};
-    std::string input_buffer;
-    bool is_image{false};
-
-    std::unique_ptr<Wayland::WlDataDeviceManager> device_manager;
-    std::unique_ptr<Wayland::WlSeat> seat;
-};
-
+#include <getopt.h>
+#include "App.hpp"
+#include "options.hpp"
 
 void registry_handler_global(void *data, struct wl_registry *wl_registry, uint32_t name, const char *interface, uint32_t version) {
     App* app = reinterpret_cast<App*>(data);
@@ -83,9 +77,11 @@ void data_source_send(void* data, struct wl_data_source* data_source, const char
     }
 
     close(fd);
+
+    if (app->paste_once) {
+        exit(0);
+    }
 }
-
-
 
 std::variant<int, std::string> get_input_from_stdin(App& app) {
     std::string input_buffer{};
@@ -118,6 +114,7 @@ overload(Ts...) -> overload<Ts...>;
 int main(int argc, char** argv) {
 
     App app{};
+    parse_options(argc, argv, app);
 
     auto user_input = get_input_from_stdin(app);
 
@@ -167,16 +164,20 @@ int main(int argc, char** argv) {
     if (chdir("/") < 0) { // Prevent unmounting errors
         std::cerr << "Error chdir\n";
     }
-    signal(SIGPIPE, SIG_IGN);
 
-    int i = fork();
-    if (i < 0) {
-        throw std::runtime_error("Failed to fork");
+
+    if (!app.foreground) {
+        signal(SIGPIPE, SIG_IGN);
+        std::cout << "hjere\n";
+        int i = fork();
+        if (i < 0) {
+            throw std::runtime_error("Failed to fork");
+        }
+        if (i > 0) {
+            exit(0); // Exiting root process
+        }
+        // Child stands
     }
-    if (i > 0) {
-        exit(0); // Exiting root process
-    }
-    // Child stands
 
     while (display.dispatch() > 0) {
     }

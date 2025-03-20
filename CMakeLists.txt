@@ -14,7 +14,7 @@ link_directories(${WAYLAND_LIBRARY_DIRS})
 add_definitions(${WAYLAND_CFLAGS_OTHER})
 
 # Source files
-add_executable(proj main.cpp)
+add_executable(proj main.cpp options.cpp)
 
 # Link libraries
 target_link_libraries(proj PRIVATE ${WAYLAND_LIBRARIES})
